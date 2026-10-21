@@ -7,6 +7,7 @@ import io
 import threading
 import socket
 from concurrent.futures import ThreadPoolExecutor
+from flask import Flask
 
 # --- FORCE IPV4 (Prevents network timeouts) ---
 orig_getaddrinfo = socket.getaddrinfo
@@ -129,20 +130,22 @@ def setup_meesho_session(init_data):
     return None, "Unknown Error"
 
 def check_fod(session):
-    """Fast check to secure 170."""
-    for _ in range(5):
+    """Hunt for 170. Waits for server cooldown between tries."""
+    for attempt in range(15):
         try:
-            r = session.get(f"{BASE_URL}/api/fod", timeout=4)
+            r = session.get(f"{BASE_URL}/api/fod", timeout=5)
             if r.status_code == 200:
                 data = r.json()
                 if data.get("enabled") and data.get("offer_bucket") == 170:
                     return True, data
             
-            session.get(f"{BASE_URL}/api/offer/hunt", timeout=4)
-        except: pass
+            session.get(f"{BASE_URL}/api/offer/hunt", timeout=5)
+            time.sleep(1.5) 
+        except:
+            pass
             
     try:
-        r = session.get(f"{BASE_URL}/api/fod", timeout=4)
+        r = session.get(f"{BASE_URL}/api/fod", timeout=5)
         if r.status_code == 200:
             return False, r.json()
     except: pass
@@ -214,11 +217,12 @@ def process_phone(chat_id, phone, state):
         r_fod = session.get(f"{BASE_URL}/api/fod", timeout=4)
         current_bucket = r_fod.json().get("offer_bucket") if r_fod.status_code == 200 else 0
         
-        if current_bucket < 170:
-            for _ in range(3):
+        if current_bucket != 170:
+            for _ in range(8):
                 session.get(f"{BASE_URL}/api/offer/hunt", timeout=4)
+                time.sleep(1.5)
                 r_fod = session.get(f"{BASE_URL}/api/fod", timeout=4)
-                if r_fod.status_code == 200 and r_fod.json().get("offer_bucket") >= 170:
+                if r_fod.status_code == 200 and r_fod.json().get("offer_bucket") == 170:
                     break
         # -----------------------------------
         
@@ -357,7 +361,23 @@ def poll_updates():
         except Exception as e:
             time.sleep(1)
 
+# ---------------------------------------------------------
+# RENDER FREE TIER FIX (Dummy Web Server)
+# ---------------------------------------------------------
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "Bot is alive!", 200
+
+def run_web_server():
+    app.run(host='0.0.0.0', port=8080)
+
 if __name__ == "__main__":
+    # Start the web server in a background thread so Render doesn't kill the app
+    threading.Thread(target=run_web_server, daemon=True).start()
+    
+    # Start your bot's main loop
     if not SESSIONS:
         SESSIONS.append({
             "init_data": "query_id=AAH_1qV_AwAAAP_WpX-aYHK9&user=%7B%22id%22%3A8584025855%2C%22first_name%22%3A%22Rishabh%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22rishabhkumar7%22%2C%22language_code%22%3A%22en%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FS_68PEYzPX6fpq4XnLlAha3PHCDZhprQvxEnpDQFAWwWFKNqzM3UFEANmHY0GZ5a.svg%22%7D&auth_date=1792563167&signature=ypE_owVcfGNRVZC5T20fmE0mIkIQtDvNatOEMVlmDlJzAbMRErMz6VfUQN6XwEXC7HPiIeCqC-TfrHndQhQ7Cw&hash=b7806e6a41ad7048c703d6b5be3dfb040007accaa38c6e30a85eeb9da42d192f",
