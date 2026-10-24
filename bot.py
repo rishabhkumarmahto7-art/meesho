@@ -368,6 +368,18 @@ def main():
     print("🤖 Injector bot online")
     app.run_polling(drop_pending_updates=True)
 
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "Bot is alive!", 200
+
+def run_web_server():
+    app.run(host='0.0.0.0', port=8080)
+
+if __name__ == "__main__":
+    # Start the web server in a background thread so Render doesn't kill the app
+    threading.Thread(target=run_web_server, daemon=True).start()
 if __name__ == "__main__":
     try:
         main()
