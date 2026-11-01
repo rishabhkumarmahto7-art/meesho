@@ -48,7 +48,7 @@ CARRIERS = ["JIO 4G", "Airtel", "Vi", "BSNL"]
 BANKS = ["HDFCBK", "ICICIB", "SBIN", "AXISBK", "KOTAKB", "PNBSMS"]
 
 SMS_TEMPLATES = [
-    ("JR-JioPay-S", "DATA Usage Alert!\nYou have used {pct}% of daily data quota as of {date}.\nJio Number: {phone10}\nDaily Quota: 2 GB\nFor data-saving tips, watch : http://tiny.jio.com/ydatausageen[...]
+    ("JR-JioPay-S", "DATA Usage Alert!\nYou have used {pct}% of daily data quota as of {date}.\nJio Number: {phone10}\nDaily Quota: 2 GB\nFor data-saving tips, watch: http://tiny.jio.com/ydatausage"),
     ("VM-{bank}-S", "A/c XX{last4} debited INR {amount}.00 Dt{date}. Avl Bal INR {balance}. -{bankname}"),
     ("VM-{bank}-T", "INR {amount}.00 credited to A/c XX{last4} on {date}. Avl Bal INR {balance}. -{bankname}"),
     ("JD-MSHOTP-S", "Your OTP for Meesho login is {otp6} and is valid for 5 mins. Please DO NOT share this OTP with anyone to keep your account safe. {rand10} Meesho"),
